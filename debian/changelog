@@ -1,0 +1,34 @@
+jobmetrics (0.2.2) calibre9; urgency=medium
+
+  * Add label on both Y-axis
+
+ -- Rémi Palancher <remi-externe.palancher@edf.fr>  Thu, 11 Feb 2016 11:06:53 +0100
+
+jobmetrics (0.2.1) calibre9; urgency=medium
+
+  * Fix profing timers values and behaviour
+
+ -- Rémi Palancher <remi-externe.palancher@edf.fr>  Wed, 10 Feb 2016 11:21:18 +0100
+
+jobmetrics (0.2.0) calibre9; urgency=medium
+
+  * Add period selectors to view last 1h, 6h or 24h
+  * Make diagram height adapt to browser window height
+  * Better error handling in REST backend and nice errors display in HTML
+    dashboard
+  * Add authentication for slurm-web REST API
+  * Add defaults for most params in configuration file
+  * Large rewrite of backend API split into small files
+  * New logging mechanism
+  * New backend profiling/debug mechanism
+  * Fix timezone offset when drawing diagrams with UTC data
+  * Fix bug with multiple cpus/nodes metrics results
+  * PEP8 cleanup, no change in logic
+
+ -- Rémi Palancher <remi-externe.palancher@edf.fr>  Wed, 10 Feb 2016 10:40:46 +0100
+
+jobmetrics (0.1.0) calibre9; urgency=medium
+
+  * Initial release.
+
+ -- Rémi Palancher <remi-externe.palancher@edf.fr>  Mon, 7 Sep 2015 17:35:06 +0200
