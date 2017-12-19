@@ -1,10 +1,12 @@
 Source: jobmetrics
-Maintainer: CCN HPC <dsp-cspito-ccn-hpc@edf.fr>
+Maintainer: Scibian Project <packaging@scibian.org>
 Uploaders: Rémi Palancher <remi-externe.palancher@edf.fr>, Mehdi Dogguy <mehdi.dogguy@edf.fr>
 Section: web
 Priority: extra
 Standards-Version: 3.9.6
 Build-Depends: debhelper (>= 8), apache2-dev
+Vcs-Git: https://github.com/scibian/jobmetrics.git
+Vcs-Browser: https://github.com/scibian/jobmetrics
 
 Package: jobmetrics-restapi
 Architecture: any
