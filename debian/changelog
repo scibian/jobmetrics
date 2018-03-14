@@ -1,3 +1,9 @@
+jobmetrics (1.0.0sci8u1) scibian8; urgency=medium
+
+  * Scibian8 rebuild.
+
+ -- Thomas HAMEL <thomas-externe.hamel@edf.fr>  Wed, 14 Mar 2018 11:46:07 +0100
+
 jobmetrics (1.0.0) calibre9; urgency=medium
 
   [ Rémi Palancher ]
