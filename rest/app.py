@@ -19,8 +19,10 @@
 # along with jobmetrics.  If not, see <http://www.gnu.org/licenses/>.
 
 
-from flask import Flask, jsonify, abort
+from flask import Flask, jsonify, abort, request
 from requests.exceptions import ConnectionError
+
+import os
 
 import logging
 from logging.handlers import TimedRotatingFileHandler
@@ -34,7 +36,12 @@ from jobmetrics.JobParams import JobParams
 from jobmetrics.JobData import JobData
 from jobmetrics.Profiler import Profiler
 
+
 app = Flask('jobmetrics')
+# By default flask redirects "metrics/CLUSTER/JOB/1h" to
+# "metrics/CLUSTER/JOB" since 1h is the default. This is nice on
+# a browser but the JS client doesn't like it
+app.url_map.redirect_defaults = False
 
 
 @app.errorhandler(500)
@@ -42,6 +49,7 @@ def internal_error(error):
     if not hasattr(error, 'description'):
         error.description = {'error': 'unknown internal error'}
     app.logger.error("error 500: %s", error.description['error'])
+    app.logger.exception(error)
     response = jsonify(error.description)
     response.status_code = 500
     return response
@@ -61,22 +69,33 @@ def init_logger(conf):
                                      when='D',
                                      interval=1,
                                      backupCount=10)
-    log_h.setLevel(logging.INFO)
-    log_h.setFormatter(Formatter('%(asctime)s %(levelname)s: %(message)s'))
+    if conf.debug:
+        log_h.setLevel(logging.DEBUG)
+    else:
+        log_h.setLevel(logging.INFO)
+    log_h.setFormatter(Formatter(
+        '%(asctime)s %(filename)s:%(lineno)d %(levelname)s: %(message)s'))
 
     # Remove all other handlers and disable propagation to ancestor logger in
     # order to avoid polluting HTTP server error log with app specific logs.
     app.logger.propagate = False
     app.logger.handlers = []
     app.logger.addHandler(log_h)
-    app.logger.setLevel(logging.INFO)
+    if conf.debug:
+        app.logger.setLevel(logging.DEBUG)
+    else:
+        app.logger.setLevel(logging.INFO)
 
 
 @app.route('/metrics/<cluster>/<int:jobid>', defaults={'period': '1h'})
 @app.route('/metrics/<cluster>/<int:jobid>/<period>')
 def metrics(cluster, jobid, period):
-
-    conf = Conf()
+    if 'JOBMETRICS_CONF_FILE' in request.environ.keys():
+        conf = Conf(request.environ['JOBMETRICS_CONF_FILE'])
+    elif 'JOBMETRICS_CONF_FILE' in os.environ.keys():
+        conf = Conf(os.environ.get('JOBMETRICS_CONF_FILE'))
+    else:
+        conf = Conf()
 
     init_logger(conf)
 
@@ -90,7 +109,7 @@ def metrics(cluster, jobid, period):
 
     try:
         job.request_params(slurm_api)
-    except IndexError, err:
+    except IndexError as err:
         # IndexError here means the job is unknown according to Slurm API.
         # Return 404 with error message
         abort(404, {'error': str(err)})
@@ -98,7 +117,7 @@ def metrics(cluster, jobid, period):
         # ValueError means the Slurm API responded something that was not
         # JSON formatted. ConnectionError means there was a problem while
         # connection to the slurm API. Return 500 with error message.
-        abort(500, {'error': str(err)})
+        abort(500, {'error': err.message})
 
     # Write the cache at this point since it will not be modified then
     cache.write()
@@ -115,7 +134,8 @@ def metrics(cluster, jobid, period):
         resp['data'] = job_data.dump()
         resp['debug'] = profiler.dump()
         return jsonify(resp)
-    except Exception, err:
+    except Exception as err:
+        app.logger.exception(err)
         abort(500, {'error': str(err)})
 
 if __name__ == '__main__':

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2016 EDF SA
+ * Copyright (C) 2015-2018 EDF SA
  *
  * This file is part of jobmetrics.
  *
@@ -45,7 +45,10 @@ function process_metrics_result(result) {
     var cpu_user = new Array;
     var cpu_system = new Array;
     var cpu_idle = new Array;
+    var cpu_iowait = new Array;
     var memory_pss = new Array;
+    var memory_rss = new Array;
+    var plots = new Array();
     var utc_offset_msec = new Date().getTimezoneOffset() * 60 * 1000;
 
     $.each(result, function( timestamp_utc, values ) {
@@ -53,10 +56,12 @@ function process_metrics_result(result) {
         cpu_user.push([timestamp, values[1]]);
         cpu_system.push([timestamp, values[2]]);
         cpu_idle.push([timestamp, values[3]]);
-        memory_pss.push([timestamp, values[4]/(1024*1024)]);
+        cpu_iowait.push([timestamp, values[4]]);
+        memory_pss.push([timestamp, values[5]/(1024*1024*1024)]);
+        memory_rss.push([timestamp, values[6]/(1024*1024*1024)]);
     });
 
-    return [
+    plots = [
         { data: cpu_system,
           color: "rgba(204,0,0,1)",
           label: "CPU system %",
@@ -66,8 +71,17 @@ function process_metrics_result(result) {
             fill: true,
           }
         },
+        { data: cpu_iowait,
+          color: "rgba(255,204,0,1)",
+          label: "CPU I/O wait %",
+          stack: true,
+          lines: {
+            show: true,
+            fill: true,
+          }
+        },
         { data: cpu_user,
-          color: "rgba(245,121,0,1)",
+          color: "rgba(204,153,255,1)",
           label: "CPU user %",
           stack: true,
           lines: {
@@ -84,12 +98,28 @@ function process_metrics_result(result) {
             fill: true,
           }
         },
-        { data: memory_pss,
-          color: "rgba(52,101,164,1)",
-          label: "MB memory",
-          yaxis: 2
-        }
     ];
+
+    if (!hide_pss) {
+	plots.push(
+            { data: memory_pss,
+              color: "rgba(52,101,164,1)",
+              label: "GiB memory (PSS)",
+              yaxis: 2
+            }
+        );
+    }
+    if (!hide_rss) {
+	plots.push(
+            { data: memory_rss,
+              color: "rgba(26,198,224,1)",
+              label: "GiB memory (RSS)",
+              yaxis: 2
+            }
+	);
+    }
+
+    return plots;
 
 }
 
@@ -150,8 +180,8 @@ function update(options) {
 
     if (update_timeout != null)
         clearTimeout(update_timeout);
-
-    api = "/jobmetrics-restapi/metrics/" + cluster + "/" + job + "/" + period;
+    base_api = "/jobmetrics-restapi"
+    api = base_api + "/metrics/" + cluster + "/" + job + "/" + period;
     $.ajax({
         url: api,
         dataType: "json" })
@@ -172,7 +202,7 @@ function update(options) {
             yaxis_cpu_label.css("left", "-8px");
 
             var yaxis_mem_label = $("<div class='axisLabel yaxisLabel yaxis2Label'></div>")
-                                  .text("Memory consumption (MB)")
+                                  .text("Memory consumption (GiB)")
                                   .appendTo("#placeholder");
 
             yaxis_mem_label.css("margin-top", -yaxis_mem_label.width() / 2);
@@ -207,7 +237,9 @@ function draw_diagram() {
 
     job = getUrlParameter('job');
     cluster = getUrlParameter('cluster');
-    debug = getUrlParameter('debug');
+    debug = ( getUrlParameter('debug') === 'true' );
+    hide_pss = ( getUrlParameter('hide_pss') === 'true' );
+    hide_rss = ( getUrlParameter('hide_rss') === 'true' );
 
     init_period_links();
     init_debug_zone();
