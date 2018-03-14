@@ -1,7 +1,7 @@
 #!flask/bin/python
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2015-2016 EDF SA
+# Copyright (C) 2015-2018 EDF SA
 #
 # This file is part of jobmetrics.
 #
@@ -39,7 +39,9 @@ class JobData(object):
                                    ['cpus',
                                     'cpu-user',
                                     'cpu-system',
-                                    'memory-pss'],
+                                    'cpu-iowait',
+                                    'memory-pss',
+                                    'memory-rss'],
                                    self.period)
         self.stack_cpu_idle()
         profiler = Profiler()
@@ -57,4 +59,3 @@ class JobData(object):
 
     def dump(self):
         return self.metrics
-        return datahash

@@ -1,7 +1,7 @@
 #!flask/bin/python
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2015-2016 EDF SA
+# Copyright (C) 2015-2018 EDF SA
 #
 # This file is part of jobmetrics.
 #
@@ -23,7 +23,7 @@ from StringIO import StringIO
 
 # valid periods with their associated interval group time
 periods = {'1h': '10s',
-           '6h': '30s',
+           '6h': '60s',
            '24h': '120s'}
 
 
@@ -35,6 +35,9 @@ class Conf(object):
             "[global]\n"
             "cache = /var/cache/jobmetrics/jobmetrics.data\n"
             "log = /var/log/jobmetrics/jobmetrics.log\n"
+            "tls_verify = true\n"
+            "ca_filepath = /etc/ssl/certs/ca-certificates.crt\n"
+            "debug = false\n"
             "[influxdb]\n"
             "server = http://localhost:8086\n"
             "db = graphite\n")
@@ -46,6 +49,9 @@ class Conf(object):
         self.influxdb_db = self.conf.get('influxdb', 'db')
         self.cache_path = self.conf.get('global', 'cache')
         self.log_path = self.conf.get('global', 'log')
+        self.tls_verify = self.conf.getboolean('global', 'tls_verify')
+        self.ca_filepath = self.conf.get('global', 'ca_filepath')
+        self.debug = self.conf.getboolean('global', 'debug')
         # All sections except influxdb and global are cluster names. So get all
         # sections names minus those two.
         self.clusters = [cluster for cluster in self.conf.sections()
@@ -55,13 +61,21 @@ class Conf(object):
 
         return self.conf.get(cluster, 'api')
 
+    def auth_enabled(self, cluster):
+
+        # use Authentication on this cluster, deafult to true
+        try:
+            return self.conf.getboolean(cluster, 'auth_enabled')
+        except ConfigParser.NoOptionError:
+            return True
+
     def login(self, cluster):
 
         # by default, if no login is provided in conf and slurm-web
         # authentication is enabled, the app tries to login as guest.
         try:
             return self.conf.get(cluster, 'login')
-        except ConfigParser.NoOptionError as err:
+        except ConfigParser.NoOptionError:
             return 'guest'
 
     def password(self, cluster):
@@ -69,6 +83,6 @@ class Conf(object):
         # password is optional (typically, it is useless with guest account)
         # with no sane default.
         try:
-            self.conf.get(cluster, 'password')
-        except ConfigParser.NoOptionError as err:
+            return self.conf.get(cluster, 'password')
+        except ConfigParser.NoOptionError:
             return None
