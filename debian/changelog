@@ -1,3 +1,9 @@
+jobmetrics (1.0.0sci9u1) scibian9; urgency=medium
+
+  * Rebuild for Scibian9.
+
+ -- Rémi Palancher <remi-externe.palancher@edf.fr>  Tue, 15 May 2018 11:49:44 +0200
+
 jobmetrics (1.0.0sci8u1) scibian8; urgency=medium
 
   * Scibian8 rebuild.
