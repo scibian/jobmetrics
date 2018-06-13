@@ -54,17 +54,22 @@ class MetricsDB(object):
 
         profiler = Profiler()
 
+        nodelist = ""
+        for node in job.nodeset:
+                nodelist = nodelist + node + "|"
+        nodelist = nodelist[:-1]
+
         metrics_s = "\"" + "\", \"".join(metrics) + "\""
         req = "select mean(value) from {metrics} " \
               "where cluster = '{cluster}' " \
               "and (( job = 'job_{job}' and time > now() - {period} ) or" \
-              " ( job = 'none' and plugin = 'cuda' and time >= {start_time}000000000 and time <= {end_time}000000000 and node = '{nodes}' )) " \
+              " ( job = 'none' and plugin = 'cuda' and time >= {start_time}000000000 and time <= {end_time}000000000 and node =~ /{nodes}/ )) " \
               "group by time({time_group}), node fill(0)" \
               .format(metrics=metrics_s,
                       period=period,
                       cluster=cluster,
                       job=job.jobid,
-                      nodes=job.nodeset,
+                      nodes=nodelist,
                       start_time=job.start_time,
                       end_time=job.end_time,
                       time_group=time_group)

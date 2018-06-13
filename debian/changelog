@@ -1,3 +1,9 @@
+jobmetrics (1.0.1-1sci8u1) scibian8; urgency=medium
+
+  * correct a bug with nodeset on influx request 
+
+ -- Nicolas Meaux <nicolas-externe.meaux@edf.fr>  Wed, 13 Jun 2018 17:54:09 +0200
+
 jobmetrics (1.0.1sci8u1) scibian8; urgency=medium
 
   * adding GPU metrics 
